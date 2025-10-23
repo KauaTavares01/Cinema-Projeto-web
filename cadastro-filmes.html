@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Cadastro de Filmes</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    
+    <nav>
+      <a href="index.html">Início</a>
+      <a href="cadastro-salas.html">Salas</a>
+      <a href="cadastro-sessoes.html">Sessões</a>
+      <a href="sessoes.html">Sessões</a>
+      <a href="venda-ingressos.html">Vendas</a>
+    </nav>
+<hr>
+    <div align = "center">
+        <h1>Cadastro de Filmes</h1>
+    </div>
+  </header>
+
+  <main>
+    <form id="form-filme">
+      <label>Título: <input type="text" id="titulo" required></label>
+      <label>Gênero: <input type="text" id="genero" required></label>
+      <label>Descrição: <textarea id="descricao"></textarea></label>
+      <label>Classificação:
+        <select id="classificacao">
+          <option>Livre</option>
+          <option>10</option>
+          <option>12</option>
+          <option>14</option>
+          <option>16</option>
+          <option>18</option>
+        </select>
+      </label>
+      <label>Duração (min): <input type="number" id="duracao" required></label>
+      <label>Data de Estreia: <input type="date" id="estreia" required></label>
+      <button type="submit">Salvar Filme</button>
+    </form>
+  </main>
+
+  <script src="js/filmes.js"></script>
+</body>
+</html>
