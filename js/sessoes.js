@@ -1,96 +1,69 @@
+// sessoes.js (corrigido) - Cadastro de Sessões
 (function () {
-  const form = document.getElementById('form-ingresso');
-  const sessaoSelect = document.getElementById('sessao');
-  const cpfInput = document.getElementById('cpf');
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('form-sessao');
+    const filmeSelect = document.getElementById('filme');
+    const salaSelect  = document.getElementById('sala');
 
-  function textoSessao(s, filmes, salas) {
-    // monta um texto amigável do option: "Filme • Sala • 20/10/2025 19:30"
-    const filme = Utils.findById(filmes, s.filmeId);
-    const sala  = Utils.findById(salas,  s.salaId);
-    const titulo = filme ? filme.titulo : 'Filme';
-    const nomeSala = sala ? sala.nome : 'Sala';
-    return `${titulo} • ${nomeSala} • ${s.dataHora}`;
-  }
-
-  function carregarSessoesNoSelect() {
-    if (!sessaoSelect) return;
-    const sessoes = Utils.getList('sessoes');
-    const filmes  = Utils.getList('filmes');
-    const salas   = Utils.getList('salas');
-
-    if (sessoes.length === 0) {
-      sessaoSelect.innerHTML = '<option value="">Cadastre sessões primeiro</option>';
+    if (!filmeSelect || !salaSelect) {
+      console.warn('Elemento <select id="filme"> ou <select id="sala"> não encontrado. Verifique os IDs no HTML.');
       return;
     }
 
-    // Ordena por data/hora para ficar organizado
-    const ordenadas = [...sessoes].sort((a, b) => new Date(a.dataHora) - new Date(b.dataHora));
+    function preencherSelects() {
+      let filmes = [];
+      let salas  = [];
+      try { filmes = JSON.parse(localStorage.getItem('filmes')) || []; } catch {}
+      try { salas  = JSON.parse(localStorage.getItem('salas'))  || []; } catch {}
 
-    sessaoSelect.innerHTML = ordenadas.map(s =>
-      `<option value="${s.id}">${textoSessao(s, filmes, salas)}</option>`
-    ).join('');
+      // FILMES
+      if (!filmes.length) {
+        filmeSelect.innerHTML = '<option value="">Cadastre filmes primeiro</option>';
+      } else {
+        filmeSelect.innerHTML = filmes.map(f => `<option value="${f.id}">${f.titulo}</option>`).join('');
+      }
 
-    // Se veio da listagem com ?sessao=ID, já seleciona
-    const sessaoParam = Utils.getQueryParam('sessao');
-    if (sessaoParam) {
-      const opt = Array.from(sessaoSelect.options).find(o => o.value === sessaoParam);
-      if (opt) sessaoSelect.value = sessaoParam;
+      // SALAS
+      if (!salas.length) {
+        salaSelect.innerHTML = '<option value="">Cadastre salas primeiro</option>';
+      } else {
+        salaSelect.innerHTML = salas.map(s => `<option value="${s.id}">${s.nome}</option>`).join('');
+      }
     }
-  }
 
-  function assentoJaVendido(sessaoId, assento) {
-    const ingressos = Utils.getList('ingressos');
-    return ingressos.some(i =>
-      String(i.sessaoId) === String(sessaoId) &&
-      i.assento.trim().toUpperCase() === assento.trim().toUpperCase()
-    );
-  }
+    preencherSelects();
 
-  // Máscara de CPF enquanto digita
-  if (cpfInput) {
-    cpfInput.addEventListener('input', function () {
-      Utils.maskCPF(cpfInput);
+    if (!form) {
+      console.warn('Formulário #form-sessao não encontrado.');
+      return;
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const sessao = {
+        id: Date.now(),
+        filmeId: (document.getElementById('filme') || {}).value,
+        salaId: (document.getElementById('sala') || {}).value,
+        dataHora: (document.getElementById('dataHora') || {}).value,
+        preco: Number((document.getElementById('preco') || {}).value || 0),
+        idioma: (document.getElementById('idioma') || {}).value,
+        formato: (document.getElementById('formato') || {}).value
+      };
+
+      if (!sessao.filmeId || !sessao.salaId || !sessao.dataHora || !sessao.preco) {
+        alert('Preencha os campos obrigatórios (filme, sala, data/hora e preço).');
+        return;
+      }
+
+      let sessoes = [];
+      try { sessoes = JSON.parse(localStorage.getItem('sessoes')) || []; } catch {}
+      sessoes.push(sessao);
+      localStorage.setItem('sessoes', JSON.stringify(sessoes));
+
+      alert('Sessão cadastrada com sucesso!');
+      form.reset();
+      preencherSelects();
     });
-  }
-
-  carregarSessoesNoSelect();
-  if (!form) return;
-
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-
-    const sessaoId = document.getElementById('sessao').value;
-    const cliente  = document.getElementById('cliente').value.trim();
-    const cpf      = Utils.onlyDigits(document.getElementById('cpf').value);
-    const assento  = document.getElementById('assento').value.trim().toUpperCase();
-    const pagamento= document.getElementById('pagamento').value;
-
-    // Validação simples (CPF: 11 dígitos)
-    if (!sessaoId || !cliente || !cpf || cpf.length !== 11 || !assento) {
-      Utils.alert('Verifique os campos: sessão, nome, CPF (11 dígitos) e assento.');
-      return;
-    }
-
-    // Evita vender o mesmo assento 2 vezes para a mesma sessão
-    if (assentoJaVendido(sessaoId, assento)) {
-      Utils.alert(`O assento ${assento} já foi vendido para essa sessão.`);
-      return;
-    }
-
-    const ingresso = {
-      id: Utils.nextId(),
-      sessaoId, cliente, cpf, assento, pagamento
-    };
-
-    const ingressos = Utils.getList('ingressos');
-    ingressos.push(ingresso);
-    Utils.saveList('ingressos', ingressos);
-
-    Utils.alert('Venda confirmada!');
-    form.reset();
-
-    // Se veio com ?sessao=ID, mantém selecionada após o reset
-    const keepSessao = Utils.getQueryParam('sessao');
-    if (keepSessao) sessaoSelect.value = keepSessao;
   });
 })();
